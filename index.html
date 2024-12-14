@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Clientes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-size: 14px;
+        }
+        .logo {
+            display: block;
+            margin: 0 auto 20px auto;
+            max-width: 150px;
+        }
+        .cobrado {
+            background-color: #d1e7dd !important; /* Verde claro */
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-users"></i> Sistema de Cobrança</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/"><i class="fas fa-users"></i> Clientes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/mensagens"><i class="fas fa-envelope"></i> Mensagens</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/configuracoes"><i class="fas fa-cogs"></i> Configurações</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Total de Clientes</h5>
+                <p class="card-text display-6">{{ total_clientes }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Valor Total</h5>
+                <p class="card-text display-6">{{ valor_total }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Clientes Cobrados</h5>
+                <p class="card-text display-6">{{ total_cobrados }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Valor Já Cobrado</h5>
+                <p class="card-text display-6">{{ valor_cobrado }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Clientes Não Cobrados</h5>
+                <p class="card-text display-6">{{ total_nao_cobrados }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+    <div class="container mt-4">
+        <img src="/static/images/logo_vigi.png" alt="Logo Vigi Câmeras" class="logo">
+        <h1 class="mb-4 text-center">Lista de Clientes</h1>
+
+        <!-- Search and Filter Form -->
+        <form method="get" class="row g-3 mb-4 align-items-end">
+            <div class="col-md-3">
+                <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Buscar por nome ou telefone">
+            </div>
+            <div class="col-md-3">
+                <select name="parcelas" class="form-select">
+                    <option value="todas" {% if filter_parcelas == 'todas' %}selected{% endif %}>Todas</option>
+                    <option value="1" {% if filter_parcelas == '1' %}selected{% endif %}>1 Parcela</option>
+                    <option value="2+" {% if filter_parcelas == '2+' %}selected{% endif %}>2 ou mais Parcelas</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="cidades" class="form-label">Cidades</label>
+                <select id="cidades" name="cidades" class="form-select" multiple>
+                    {% for cidade in cidades_disponiveis %}
+                    <option value="{{ cidade }}" {% if cidade in selected_cidades %}selected{% endif %}>{{ cidade }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="cobrados" class="form-label">Filtrar Cobrança</label>
+                <select id="cobrados" name="cobrados" class="form-select">
+                    <option value="todos" {% if filter_cobrados == 'todos' %}selected{% endif %}>Todos</option>
+                    <option value="cobrados" {% if filter_cobrados == 'cobrados' %}selected{% endif %}>Já Cobrados</option>
+                    <option value="nao_cobrados" {% if filter_cobrados == 'nao_cobrados' %}selected{% endif %}>Não Cobrados</option>
+                </select>
+            </div>
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-primary me-2"><i class="fas fa-filter"></i> Filtrar</button>
+                <a href="/" class="btn btn-secondary"><i class="fas fa-times"></i> Limpar</a>
+            </div>
+        </form>
+
+        <!-- Table of Clients -->
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Cidade</th>
+                    <th>Qtd Títulos</th>
+                    <th>Total Vencido</th>
+                    <th>Valor c/ Juros e Multa</th>
+                    <th>Cobrado</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cliente in clientes %}
+                <tr class="{% if cliente['cobrado'] %}cobrado{% endif %}" id="cliente-row-{{ cliente['id'] }}">
+                    <td>{{ cliente['nome'] }}</td>
+                    <td>{{ cliente['telefone'] }}</td>
+                    <td>{{ cliente['cidade'] }}</td>
+                    <td>{{ cliente['qtd_titulos'] }}</td>
+                    <td>{{ cliente['total_vencido'] }}</td>
+                    <td>{{ cliente['valor_com_juros_multa'] }}</td>
+                    <td id="cobrado-status-{{ cliente['id'] }}">{{ "Sim" if cliente['cobrado'] else "Não" }}</td>
+                    <td>
+                        <button class="btn btn-success btn-sm" onclick="cobrarCliente({{ cliente['id'] }})"><i class="fas fa-paper-plane"></i> Cobrar Cliente</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page - 1 }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_parcelas %}&parcelas={{ filter_parcelas }}{% endif %}{% for cidade in selected_cidades %}&cidades={{ cidade }}{% endfor %}{% if filter_cobrados %}&cobrados={{ filter_cobrados }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="?page={{ p }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_parcelas %}&parcelas={{ filter_parcelas }}{% endif %}{% for cidade in selected_cidades %}&cidades={{ cidade }}{% endfor %}{% if filter_cobrados %}&cobrados={{ filter_cobrados }}{% endif %}">{{ p }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page + 1 }}{% if search_query %}&search={{ search_query }}{% endif %}{% if filter_parcelas %}&parcelas={{ filter_parcelas }}{% endif %}{% for cidade in selected_cidades %}&cidades={{ cidade }}{% endfor %}{% if filter_cobrados %}&cobrados={{ filter_cobrados }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+    <script>
+        function cobrarCliente(clienteId) {
+            fetch(`/cobrar/${clienteId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Atualizar a linha para indicar que foi cobrado
+                        document.getElementById(`cliente-row-${clienteId}`).classList.add('cobrado');
+                        document.getElementById(`cobrado-status-${clienteId}`).textContent = 'Sim';
+
+                        // Abrir o link do WhatsApp em uma nova aba
+                        window.open(data.link, '_blank');
+                    } else {
+                        alert(data.message || 'Erro ao cobrar cliente.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao conectar com o servidor.');
+                });
+        }
+    </script>
+</body>
+</html>
